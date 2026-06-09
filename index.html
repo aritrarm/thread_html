@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Threads</title>
+<script src="config.js" onerror="window._configMissing=true"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#5b6af7;--accent-s:rgba(91,106,247,.12);
+  --green:#22c55e;--green-s:rgba(34,197,94,.1);
+  --orange:#f97316;--orange-s:rgba(249,115,22,.1);
+  --red:#ef4444;--red-s:rgba(239,68,68,.1);
+  --purple:#a855f7;--purple-s:rgba(168,85,247,.1);
+  --yellow:#eab308;--yellow-s:rgba(234,179,8,.1);
+  --sky:#38bdf8;--sky-s:rgba(56,189,248,.1);
+  --r:8px;--rsm:5px;--tr:.15s ease;
+}
+[data-theme="dark"]{
+  --bg:#0c0c14;--bg2:#111120;--bg3:#16162a;
+  --border:#1e1e34;--border2:#2a2a44;
+  --text:#e2e2f0;--text2:#8888aa;--text3:#45455a;
+  --card:#13131f;--sh:0 2px 12px rgba(0,0,0,.4);
+}
+[data-theme="light"]{
+  --bg:#f2f2f7;--bg2:#fff;--bg3:#ebebf3;
+  --border:#e0e0ec;--border2:#cecedd;
+  --text:#1a1a2e;--text2:#60607a;--text3:#aaaabc;
+  --card:#fff;--sh:0 2px 12px rgba(0,0,0,.07);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;min-height:100vh;transition:background var(--tr),color var(--tr);}
+.app{max-width:860px;margin:0 auto;padding:24px 16px 80px;}
+
+/* SETUP BANNER */
+.setup-banner{background:var(--orange-s);border:1px solid rgba(249,115,22,.3);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;display:none;}
+.setup-banner.show{display:block;}
+.setup-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;color:var(--orange);margin-bottom:6px;}
+.setup-body{font-size:12px;color:var(--text2);line-height:1.7;}
+.setup-body code{font-family:'DM Mono',monospace;background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px;color:var(--text);}
+
+/* SAVE STATUS */
+.save-status{position:fixed;bottom:20px;right:20px;padding:8px 14px;border-radius:var(--r);font-family:'DM Mono',monospace;font-size:11px;display:none;z-index:200;border:1px solid var(--border2);transition:all var(--tr);}
+.save-status.saving{display:flex;align-items:center;gap:6px;background:var(--bg2);color:var(--text2);}
+.save-status.saved{display:flex;align-items:center;gap:6px;background:var(--green-s);color:var(--green);border-color:rgba(34,197,94,.3);}
+.save-status.error{display:flex;align-items:center;gap:6px;background:var(--red-s);color:var(--red);border-color:rgba(239,68,68,.3);}
+
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:12px;}
+.proj-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);}
+.proj-purpose{font-size:12px;color:var(--text2);margin-top:3px;max-width:500px;}
+.icon-round{width:32px;height:32px;border-radius:var(--rsm);border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all var(--tr);}
+.icon-round:hover{border-color:var(--accent);color:var(--accent);}
+
+.health{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:11px 16px;margin-bottom:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.hchip{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);font-family:'DM Mono',monospace;font-size:11px;}
+.hchip .n{font-size:14px;font-weight:500;margin-right:1px;}
+.hchip.new .n{color:var(--text2);}
+.hchip.doing .n{color:var(--orange);}
+.hchip.blocked .n{color:var(--red);}
+.hchip.review .n{color:var(--sky);}
+.hchip.done .n{color:var(--green);}
+.hchip.cancelled .n{color:var(--text3);}
+.hchip.merged .n{color:var(--purple);}
+.hsep{width:1px;height:20px;background:var(--border2);margin:0 4px;}
+.htotal{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
+
+.lineage{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:20px;}
+.panel-label{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:8px;}
+.lin-rows{display:flex;flex-direction:column;gap:5px;}
+.lin-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
+.lnum{padding:1px 6px;border-radius:3px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all var(--tr);}
+.lnum:hover{border-color:var(--accent);color:var(--accent);}
+.larr{color:var(--text3);font-size:10px;}
+.lmerge{color:var(--purple);}
+.ldate{color:var(--text3);font-size:10px;margin-left:4px;}
+
+.sec-label{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin:0 0 10px;display:flex;align-items:center;gap:8px;}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.node{margin-bottom:4px;}
+.node-header{display:flex;align-items:flex-start;gap:7px;padding:9px 11px;border-radius:var(--r);border:1px solid var(--border);background:var(--card);cursor:pointer;user-select:none;transition:border-color var(--tr);}
+.node-header:hover{border-color:var(--border2);}
+.node.open>.node-header{border-color:var(--border2);}
+.arrow{font-size:8px;color:var(--text3);transition:transform .18s;flex-shrink:0;width:10px;margin-top:4px;}
+.node.open>.node-header>.arrow{transform:rotate(90deg);}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.s-new{background:transparent;border:1.5px solid var(--text3);}
+.s-doing{background:var(--orange);box-shadow:0 0 5px rgba(249,115,22,.5);}
+.s-blocked{background:var(--red);box-shadow:0 0 5px rgba(239,68,68,.5);}
+.s-review{background:var(--sky);}
+.s-done{background:var(--green);}
+.s-cancelled{background:var(--text3);}
+.s-merged{background:var(--purple);}
+.tnum{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);flex-shrink:0;margin-top:2px;min-width:28px;}
+.tblock{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+.trow1{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+.ttitle{font-weight:500;font-size:13px;color:var(--text);line-height:1.4;}
+.ttitle.done,.ttitle.cancelled{color:var(--text3);text-decoration:line-through;}
+.ttitle.merged{color:var(--text2);}
+.tprefix{font-weight:600;font-size:13px;}
+.tprefix.action{color:var(--orange);}
+.tprefix.meeting{color:var(--accent);}
+.tprefix.research{color:var(--yellow);}
+.towner{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);}
+.tmerged-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--purple);}
+.sbadge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 7px;border-radius:10px;font-weight:500;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0;}
+.sb-new{background:var(--bg3);color:var(--text3);border:1px solid var(--border2);}
+.sb-doing{background:var(--orange-s);color:var(--orange);border:1px solid rgba(249,115,22,.2);}
+.sb-blocked{background:var(--red-s);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+.sb-review{background:var(--sky-s);color:var(--sky);border:1px solid rgba(56,189,248,.2);}
+.sb-done{background:var(--green-s);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+.sb-cancelled{background:var(--bg3);color:var(--text3);border:1px solid var(--border2);}
+.sb-merged{background:var(--purple-s);color:var(--purple);border:1px solid rgba(168,85,247,.2);}
+.tpurpose{font-size:11px;color:var(--text2);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tdecision{font-size:11px;color:var(--text3);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tdecision::before{content:'↳ ';}
+.tartefacts{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;}
+.achip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:12px;border:1px solid var(--border2);background:var(--bg3);font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);}
+.achip.jira{border-color:rgba(91,106,247,.3);color:var(--accent);}
+.achip.conf{border-color:rgba(34,197,94,.25);color:var(--green);}
+.achip.html{border-color:rgba(234,179,8,.25);color:var(--yellow);}
+.ticons{display:flex;gap:4px;align-items:center;flex-shrink:0;margin-top:1px;}
+.ibtn{width:26px;height:26px;border-radius:var(--rsm);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--tr);flex-shrink:0;position:relative;z-index:2;}
+.ibtn:hover{background:var(--accent-s);border-color:var(--accent);color:var(--accent);}
+.ibtn.add:hover{background:var(--green-s);border-color:var(--green);color:var(--green);}
+.node-body{display:none;margin-left:20px;padding-left:12px;border-left:1px solid var(--border);margin-top:4px;}
+.node.open>.node-body{display:block;}
+
+.closed-summary{display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:var(--r);border:1px dashed var(--border2);background:transparent;cursor:pointer;margin-bottom:4px;transition:all var(--tr);user-select:none;}
+.closed-summary:hover{border-color:var(--border2);background:var(--bg3);}
+.closed-summary.open{border-style:solid;background:var(--bg3);}
+.cs-arrow{font-size:8px;color:var(--text3);transition:transform .18s;flex-shrink:0;}
+.closed-summary.open .cs-arrow{transform:rotate(90deg);}
+.cs-pills{display:flex;gap:6px;align-items:center;flex:1;flex-wrap:wrap;}
+.cs-pill{display:inline-flex;align-items:center;gap:4px;font-family:'DM Mono',monospace;font-size:10px;}
+.cs-pill .cs-n{font-size:12px;font-weight:600;}
+.cs-pill.done .cs-n{color:var(--green);}
+.cs-pill.cancelled .cs-n{color:var(--text3);}
+.cs-pill.merged .cs-n{color:var(--purple);}
+.cs-pill .cs-lbl{color:var(--text3);}
+.cs-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.cs-hint{font-size:10px;color:var(--text3);font-style:italic;margin-left:auto;}
+.closed-threads{display:none;margin-top:4px;}
+.closed-summary.open+.closed-threads{display:block;}
+
+.add-root{display:flex;align-items:center;gap:6px;padding:9px 12px;border:1px dashed var(--border2);border-radius:var(--r);background:transparent;color:var(--text3);font-size:13px;cursor:pointer;transition:all var(--tr);width:100%;margin-top:6px;font-family:'DM Sans',sans-serif;}
+.add-root:hover{border-color:var(--green);color:var(--green);background:var(--green-s);}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
+.overlay.show{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;box-shadow:var(--sh);}
+.modal-head{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--text);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;}
+.mcl{width:26px;height:26px;border-radius:var(--rsm);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.mcl:hover{background:var(--red-s);border-color:var(--red);color:var(--red);}
+.mf{margin-bottom:14px;}
+.mf label{display:block;font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:6px;}
+.mf input,.mf textarea,.mf select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rsm);padding:8px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;transition:border-color var(--tr);outline:none;}
+.mf input:focus,.mf textarea:focus,.mf select:focus{border-color:var(--accent);}
+.mf textarea{height:64px;resize:vertical;}
+.mf select option{background:var(--bg2);}
+.hint{font-size:11px;color:var(--text3);margin-top:3px;}
+.err{font-size:11px;color:var(--red);margin-top:3px;display:none;}
+.char-c{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-align:right;margin-top:3px;}
+.char-c.warn{color:var(--orange);}
+.type-row,.srow{display:flex;gap:5px;flex-wrap:wrap;}
+.topt,.sopt{padding:6px 11px;border:1px solid var(--border2);border-radius:var(--rsm);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;background:var(--bg3);color:var(--text2);transition:all var(--tr);}
+.topt:hover,.sopt:hover{background:var(--bg2);}
+.topt.on-plain{background:var(--accent-s);color:var(--accent);border-color:rgba(91,106,247,.3);}
+.topt.on-action{background:var(--orange-s);color:var(--orange);border-color:rgba(249,115,22,.3);}
+.topt.on-meeting{background:var(--accent-s);color:var(--accent);border-color:rgba(91,106,247,.3);}
+.topt.on-research{background:var(--yellow-s);color:var(--yellow);border-color:rgba(234,179,8,.3);}
+.sopt.on-new{background:var(--bg3);color:var(--text2);}
+.sopt.on-doing{background:var(--orange-s);color:var(--orange);border-color:rgba(249,115,22,.3);}
+.sopt.on-blocked{background:var(--red-s);color:var(--red);border-color:rgba(239,68,68,.3);}
+.sopt.on-review{background:var(--sky-s);color:var(--sky);border-color:rgba(56,189,248,.3);}
+.sopt.on-done{background:var(--green-s);color:var(--green);border-color:rgba(34,197,94,.3);}
+.sopt.on-cancelled{background:var(--bg3);color:var(--text3);}
+.sopt.on-merged{background:var(--purple-s);color:var(--purple);border-color:rgba(168,85,247,.3);}
+.merge-pick,.parent-pick{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;}
+.mopt,.popt{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--rsm);cursor:pointer;background:var(--bg3);transition:all var(--tr);}
+.mopt:hover,.mopt.sel{border-color:var(--purple);background:var(--purple-s);}
+.popt:hover,.popt.sel{border-color:var(--accent);background:var(--accent-s);}
+.mopt-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);}
+.popt-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);}
+.mopt-title,.popt-title{font-size:12px;color:var(--text);flex:1;}
+.popt-root{font-style:italic;color:var(--text2);}
+.mdiv{border:none;border-top:1px solid var(--border);margin:14px 0;}
+.mactions{display:flex;gap:8px;justify-content:flex-end;}
+.art-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.clist{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+.cmnt{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rsm);padding:8px 10px;}
+.cmnt-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:2px;}
+.cmnt-text{font-size:12px;color:var(--text2);line-height:1.5;}
+.cinput-row{display:flex;gap:6px;}
+.cinput{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rsm);padding:7px 10px;color:var(--text);font-size:12px;outline:none;font-family:'DM Sans',sans-serif;}
+.cinput:focus{border-color:var(--accent);}
+.btn{padding:8px 16px;border-radius:var(--rsm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all var(--tr);border:1px solid transparent;}
+.btn-g{background:var(--bg3);border-color:var(--border2);color:var(--text2);}
+.btn-g:hover{background:var(--bg2);color:var(--text);}
+.btn-p{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-p:hover{opacity:.88;}
+.btn-d{background:var(--red-s);color:var(--red);border-color:rgba(239,68,68,.3);}
+.btn-d:hover{background:var(--red);color:#fff;}
+.btn-sm{padding:5px 10px;font-size:11px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SETUP BANNER -->
+  <div class="setup-banner" id="setup-banner">
+    <div class="setup-title">⚠ config.js not found — running in read-only demo mode</div>
+    <div class="setup-body">
+      To enable saving, create a <code>config.js</code> file next to <code>index.html</code> based on <code>config.example.js</code>.<br>
+      It must contain your GitHub token, owner, repo, and branch. This file is in <code>.gitignore</code> and will never be committed.
+    </div>
+  </div>
+
+  <div class="topbar">
+    <div>
+      <div class="proj-title">Project Alpha</div>
+      <div class="proj-purpose">Build and ship the payments infrastructure overhaul for Q3</div>
+    </div>
+    <div class="icon-round" onclick="toggleTheme()"><span id="theme-icon">☀️</span></div>
+  </div>
+
+  <div class="health" id="health-bar"></div>
+
+  <div class="lineage">
+    <div class="panel-label">🧬 Thread lineage</div>
+    <div class="lin-rows" id="lin-rows"><div style="font-size:11px;color:var(--text3)">Loading...</div></div>
+  </div>
+
+  <div class="sec-label">Threads</div>
+  <div id="tree"></div>
+  <button class="add-root" onclick="openNew()">+ Add thread</button>
+</div>
+
+<!-- SAVE STATUS -->
+<div class="save-status" id="save-status"></div>
+
+<!-- MODAL -->
+<div class="overlay" id="ov" onclick="ovClick(event)">
+<div class="modal" id="modal">
+  <div class="modal-head">
+    <span id="mhead">New Thread</span>
+    <div class="mcl" onclick="closeModal()">✕</div>
+  </div>
+
+  <div class="mf" id="parent-field" style="display:none">
+    <label>Parent thread <span style="color:var(--red)">*</span></label>
+    <div class="parent-pick" id="parent-pick"></div>
+    <div class="err" id="err-parent">Please select a parent</div>
+  </div>
+
+  <div class="mf">
+    <label>Type</label>
+    <div class="type-row">
+      <div class="topt on-plain" id="topt-plain"    onclick="setType('plain')">Plain</div>
+      <div class="topt"          id="topt-action"   onclick="setType('action')">[Action]</div>
+      <div class="topt"          id="topt-meeting"  onclick="setType('meeting')">[Meeting]</div>
+      <div class="topt"          id="topt-research" onclick="setType('research')">[Research]</div>
+    </div>
+  </div>
+
+  <div class="mf">
+    <label>Title <span style="color:var(--red)">*</span></label>
+    <input id="m-title" placeholder="What is this thread about?">
+    <div class="err" id="err-title">Title is required</div>
+  </div>
+
+  <div class="mf">
+    <label>Purpose <span style="color:var(--red)">*</span> <span style="color:var(--text3);font-size:9px;text-transform:none;letter-spacing:0">(max 60 chars)</span></label>
+    <input id="m-purpose" maxlength="60" placeholder="Why does this thread exist?" oninput="updCC()">
+    <div class="char-c" id="char-c">0 / 60</div>
+    <div class="err" id="err-purpose">Purpose is required</div>
+  </div>
+
+  <div class="mf">
+    <label>Notes <span style="color:var(--text3);font-size:9px;text-transform:none;letter-spacing:0">(optional)</span></label>
+    <textarea id="m-notes" placeholder="Any context, background or initial thoughts..."></textarea>
+  </div>
+
+  <div id="edit-only" style="display:none">
+    <div class="mf">
+      <label>Owner</label>
+      <input id="m-owner" placeholder="@name">
+    </div>
+
+    <div class="mf">
+      <label>Status</label>
+      <div class="srow">
+        <div class="sopt on-new" id="sopt-new"       onclick="setSt('new')">New</div>
+        <div class="sopt"        id="sopt-doing"      onclick="setSt('doing')">Doing</div>
+        <div class="sopt"        id="sopt-blocked"    onclick="setSt('blocked')">Blocked</div>
+        <div class="sopt"        id="sopt-review"     onclick="setSt('review')">Review</div>
+        <div class="sopt"        id="sopt-done"       onclick="setSt('done')">Done</div>
+        <div class="sopt"        id="sopt-cancelled"  onclick="setSt('cancelled')">Cancelled</div>
+        <div class="sopt"        id="sopt-merged"     onclick="setSt('merged')">Merged</div>
+      </div>
+    </div>
+
+    <div class="mf" id="dec-field" style="display:none">
+      <label>Decision <span style="color:var(--red)">*</span></label>
+      <input id="m-decision" placeholder="What was decided / why was this closed?">
+      <div class="hint">Required when closing (Done / Cancelled / Merged)</div>
+      <div class="err" id="err-decision">Decision is required to close a thread</div>
+    </div>
+
+    <div class="mf" id="merge-field" style="display:none">
+      <label>Merge into</label>
+      <div class="merge-pick" id="merge-pick"></div>
+      <div class="err" id="err-merge">Select a thread to merge into</div>
+    </div>
+
+    <div class="mf">
+      <label>Artefacts</label>
+      <div class="art-row" id="art-row"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-g btn-sm" onclick="addArt('jira')">+ Jira</button>
+        <button class="btn btn-g btn-sm" onclick="addArt('conf')">+ Confluence</button>
+        <button class="btn btn-g btn-sm" onclick="addArt('html')">+ HTML</button>
+      </div>
+    </div>
+
+    <div class="mf">
+      <label>Comments</label>
+      <div class="clist" id="clist"></div>
+      <div class="cinput-row">
+        <input class="cinput" id="new-c" placeholder="Add a comment...">
+        <button class="btn btn-g btn-sm" onclick="addComment()">Add</button>
+      </div>
+    </div>
+
+    <div class="mdiv"></div>
+    <div style="margin-bottom:14px">
+      <button class="btn btn-d btn-sm" onclick="deleteThread()">Delete thread</button>
+    </div>
+  </div>
+
+  <div class="mdiv"></div>
+  <div class="mactions">
+    <button class="btn btn-g" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-p" onclick="saveThread()">Save</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ── CONFIG CHECK ──
+const HAS_CONFIG = !window._configMissing && typeof GITHUB_CONFIG !== 'undefined';
+if(!HAS_CONFIG) document.getElementById('setup-banner').classList.add('show');
+
+// ── STATE ──
+let threads=[];
+let fileSHA=''; // GitHub needs the current SHA to update a file
+let editId=null,newParentNum=null,fromBottomBtn=false,selectedParent=null;
+let mType='plain',mSt='new',mMerge=null,mArts=[],mComments=[];
+
+const CLOSING=['done','cancelled','merged'];
+const CLOSED_SET=new Set(CLOSING);
+const ORDER=['blocked','doing','review','new','merged','cancelled','done'];
+const DOTCLS={new:'s-new',doing:'s-doing',blocked:'s-blocked',review:'s-review',done:'s-done',cancelled:'s-cancelled',merged:'s-merged'};
+const BADGECLS={new:'sb-new',doing:'sb-doing',blocked:'sb-blocked',review:'sb-review',done:'sb-done',cancelled:'sb-cancelled',merged:'sb-merged'};
+const BADGELBL={new:'New',doing:'Doing',blocked:'Blocked',review:'Review',done:'Done',cancelled:'Cancelled',merged:'Merged'};
+const ARTICON={jira:'🟦',conf:'📗',html:'🌐'};
+const PREFIXCLS={action:'action',meeting:'meeting',research:'research'};
+const CLSLBL={done:'Done',cancelled:'Cancelled',merged:'Merged'};
+const CLSDOT={done:'background:var(--green)',cancelled:'background:var(--text3)',merged:'background:var(--purple)'};
+
+// ── GITHUB API ──
+async function ghFetch(path,method='GET',body=null){
+  if(!HAS_CONFIG) return null;
+  const opts={
+    method,
+    headers:{
+      'Authorization':`token ${GITHUB_CONFIG.token}`,
+      'Accept':'application/vnd.github.v3+json',
+      'Content-Type':'application/json'
+    }
+  };
+  if(body) opts.body=JSON.stringify(body);
+  const res=await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${path}`,opts);
+  if(!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+  return res.json();
+}
+
+async function loadThreads(){
+  if(!HAS_CONFIG){
+    // fallback: load from threads.json via relative fetch
+    try{
+      const r=await fetch('threads.json');
+      threads=await r.json();
+    } catch(e){
+      threads=[];
+    }
+    renderAll();
+    return;
+  }
+  try{
+    const data=await ghFetch('threads.json');
+    fileSHA=data.sha;
+    threads=JSON.parse(atob(data.content.replace(/\n/g,'')));
+    renderAll();
+  } catch(e){
+    showStatus('error','Failed to load threads.json');
+  }
+}
+
+async function persistThreads(commitMsg){
+  if(!HAS_CONFIG) return; // no-op if no config
+  showStatus('saving','Saving...');
+  try{
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(threads,null,2))));
+    const res=await ghFetch('threads.json','PUT',{
+      message: commitMsg || 'Update threads',
+      content,
+      sha: fileSHA,
+      branch: GITHUB_CONFIG.branch
+    });
+    fileSHA=res.content.sha;
+    showStatus('saved','Saved ✓');
+  } catch(e){
+    showStatus('error','Save failed — check token/permissions');
+  }
+}
+
+function showStatus(type,msg){
+  const el=document.getElementById('save-status');
+  el.className=`save-status ${type}`;
+  el.textContent=msg;
+  if(type==='saved') setTimeout(()=>{el.className='save-status';},2500);
+}
+
+// ── THEME ──
+function toggleTheme(){
+  const h=document.documentElement,dark=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('theme-icon').textContent=dark?'🌙':'☀️';
+}
+
+// ── NUMBERING ──
+function nextNum(par){
+  const sibs=threads.filter(t=>t.par===par);
+  if(!par) return String(threads.filter(t=>!t.par).length+1);
+  return par+'.'+(sibs.length+1);
+}
+
+// ── EFFECTIVE STATUS ──
+function effSt(num){
+  const t=threads.find(x=>x.num===num);
+  if(!t) return 'new';
+  const ch=threads.filter(x=>x.par===num);
+  if(!ch.length) return t.status;
+  const all=[t.status,...ch.map(c=>effSt(c.num))];
+  for(const s of ORDER) if(all.includes(s)) return s;
+  return t.status;
+}
+
+// ── RENDER ──
+function renderAll(){renderTree();renderHealth();renderLineage();}
+
+function renderTree(){
+  const el=document.getElementById('tree');
+  el.innerHTML=threads.filter(t=>!t.par).map(t=>renderNode(t)).join('');
+  attachListeners(el);
+}
+
+function attachListeners(root){
+  root.querySelectorAll('.node-header').forEach(h=>{
+    h.addEventListener('click',function(e){
+      if(e.target.closest('.ibtn')) return;
+      this.parentElement.classList.toggle('open');
+    });
+  });
+  root.querySelectorAll('.closed-summary').forEach(cs=>{
+    cs.addEventListener('click',function(e){
+      e.stopPropagation();
+      this.classList.toggle('open');
+    });
+  });
+}
+
+function buildTitle(t){
+  const sc=CLOSING.includes(t.status)?t.status:t.status==='merged'?'merged':'';
+  if(t.type==='plain') return `<span class="ttitle ${sc}">${t.title}</span>`;
+  const lbl=t.type.charAt(0).toUpperCase()+t.type.slice(1);
+  return `<span class="ttitle ${sc}"><span class="tprefix ${PREFIXCLS[t.type]}">[${lbl}]</span> ${t.title}</span>`;
+}
+
+function renderNode(t){
+  const eff=effSt(t.num);
+  const kids=threads.filter(x=>x.par===t.num);
+  const active=kids.filter(k=>!CLOSED_SET.has(k.status));
+  const closed=kids.filter(k=>CLOSED_SET.has(k.status));
+
+  const arts=t.artefacts&&t.artefacts.length
+    ?`<div class="tartefacts">${t.artefacts.map(a=>`<span class="achip ${a.k}">${ARTICON[a.k]} ${a.l}</span>`).join('')}</div>`:'';
+  const decLine=CLOSING.includes(t.status)&&t.decision?`<div class="tdecision">${t.decision}</div>`:'';
+  const mergedLbl=t.mergeInto?`<span class="tmerged-lbl">⇢ ${t.mergeInto}</span>`:'';
+  const ownerLbl=t.owner?`<span class="towner">${t.owner}</span>`:'';
+
+  let bodyHTML=active.map(c=>renderNode(c)).join('');
+  if(closed.length){
+    const counts={};
+    closed.forEach(k=>{counts[k.status]=(counts[k.status]||0)+1;});
+    const pills=Object.entries(counts).map(([st,n])=>`
+      <span class="cs-pill ${st}">
+        <span class="cs-dot" style="${CLSDOT[st]}"></span>
+        <span class="cs-n">${n}</span>
+        <span class="cs-lbl">${CLSLBL[st]}</span>
+      </span>`).join('<span style="color:var(--text3);font-size:10px;margin:0 2px">·</span>');
+    bodyHTML+=`
+      <div class="closed-summary">
+        <span class="cs-arrow">▶</span>
+        <div class="cs-pills">${pills}</div>
+        <span class="cs-hint">click to expand</span>
+      </div>
+      <div class="closed-threads">${closed.map(c=>renderNode(c)).join('')}</div>`;
+  }
+
+  return `
+<div class="node${kids.length?' open':''}" data-num="${t.num}">
+  <div class="node-header">
+    <span class="arrow">▶</span>
+    <span class="sdot ${DOTCLS[eff]}"></span>
+    <span class="tnum">${t.num}</span>
+    <div class="tblock">
+      <div class="trow1">${buildTitle(t)}${ownerLbl}${mergedLbl}<span class="sbadge ${BADGECLS[eff]}">${BADGELBL[eff]}</span></div>
+      <div class="tpurpose">${t.purpose}</div>
+      ${decLine}${arts}
+    </div>
+    <div class="ticons">
+      <div class="ibtn" onclick="openEdit('${t.id}')" title="Edit">✎</div>
+      <div class="ibtn" onclick="toJira('${t.id}')" title="Send to Jira">J</div>
+      <div class="ibtn add" onclick="openNewFromThread('${t.num}')" title="Add subthread">+</div>
+    </div>
+  </div>
+  <div class="node-body">${bodyHTML}</div>
+</div>`;
+}
+
+function renderHealth(){
+  const counts={new:0,doing:0,blocked:0,review:0,done:0,cancelled:0,merged:0};
+  threads.forEach(t=>{if(counts[t.status]!==undefined)counts[t.status]++;});
+  const labels={new:'New',doing:'Doing',blocked:'Blocked',review:'Review',done:'Done',cancelled:'Cancelled',merged:'Merged'};
+  document.getElementById('health-bar').innerHTML=
+    Object.entries(counts).filter(([,v])=>v>0)
+      .map(([k,v])=>`<div class="hchip ${k}"><span class="n">${v}</span><span>${labels[k]}</span></div>`)
+      .join('')+`<div class="hsep"></div><div class="htotal">${threads.length} threads</div>`;
+}
+
+function renderLineage(){
+  const el=document.getElementById('lin-rows');
+  if(!threads.length){el.innerHTML='<div style="font-size:11px;color:var(--text3)">No threads yet.</div>';return;}
+  const lines=threads.filter(t=>!t.par).map(r=>{
+    const desc=threads.filter(t=>t.num===r.num||t.num.startsWith(r.num+'.'));
+    const nums=desc.map(t=>`<span class="lnum" onclick="hl('${t.num}')">${t.num}</span>`).join('<span class="larr">→</span>');
+    return `<div class="lin-row">${nums}<span class="ldate">${r.created}</span></div>`;
+  });
+  const merges=threads.filter(t=>t.mergeInto).map(t=>
+    `<div class="lin-row"><span class="lnum">${t.num}</span><span class="larr">⇢</span><span class="lmerge">merged into</span><span class="lnum">${t.mergeInto}</span></div>`
+  );
+  el.innerHTML=[...lines,...merges].join('');
+}
+
+function hl(num){
+  document.querySelectorAll('.node').forEach(n=>n.style.outline='');
+  document.querySelectorAll(`[data-num="${num}"]`).forEach(n=>{
+    n.style.outline='2px solid var(--accent)';n.style.borderRadius='var(--r)';
+    n.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(()=>n.style.outline='',2000);
+  });
+}
+
+// ── MODAL ──
+function openNew(){
+  editId=null;fromBottomBtn=true;selectedParent=null;
+  mType='plain';mSt='new';mMerge=null;mArts=[];mComments=[];
+  document.getElementById('mhead').textContent='New Thread';
+  ['m-title','m-purpose','m-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('edit-only').style.display='none';
+  document.getElementById('dec-field').style.display='none';
+  document.getElementById('merge-field').style.display='none';
+  document.querySelectorAll('.err').forEach(e=>e.style.display='none');
+  setType('plain');updCC();
+  document.getElementById('parent-field').style.display='block';
+  renderParentPick();
+  document.getElementById('ov').classList.add('show');
+}
+
+function openNewFromThread(parentNum){
+  editId=null;fromBottomBtn=false;newParentNum=parentNum;selectedParent=parentNum;
+  mType='plain';mSt='new';mMerge=null;mArts=[];mComments=[];
+  document.getElementById('mhead').textContent=`New subthread under ${parentNum}`;
+  ['m-title','m-purpose','m-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('edit-only').style.display='none';
+  document.getElementById('dec-field').style.display='none';
+  document.getElementById('merge-field').style.display='none';
+  document.getElementById('parent-field').style.display='none';
+  document.querySelectorAll('.err').forEach(e=>e.style.display='none');
+  setType('plain');updCC();
+  document.getElementById('ov').classList.add('show');
+}
+
+function openEdit(id){
+  const t=threads.find(x=>x.id===id);if(!t)return;
+  editId=id;fromBottomBtn=false;
+  mType=t.type;mSt=t.status;mMerge=t.mergeInto||null;
+  mArts=[...(t.artefacts||[])];mComments=[...(t.comments||[])];
+  document.getElementById('mhead').textContent=`Edit — ${t.num}`;
+  document.getElementById('m-title').value=t.title;
+  document.getElementById('m-purpose').value=t.purpose;
+  document.getElementById('m-notes').value=t.notes||'';
+  document.getElementById('m-owner').value=t.owner||'';
+  document.getElementById('m-decision').value=t.decision||'';
+  document.getElementById('parent-field').style.display='none';
+  document.getElementById('edit-only').style.display='block';
+  document.querySelectorAll('.err').forEach(e=>e.style.display='none');
+  setType(t.type);setSt(t.status);updCC();
+  renderArts();renderComments();renderMergePick();
+  document.getElementById('ov').classList.add('show');
+}
+
+function closeModal(){document.getElementById('ov').classList.remove('show');}
+function ovClick(e){if(e.target===document.getElementById('ov'))closeModal();}
+
+function renderParentPick(){
+  const rootOpt=`<div class="popt${selectedParent==='__root__'?' sel':''}" onclick="selParent('__root__')">
+    <span class="popt-num">—</span><span class="popt-title popt-root">Project root (top-level thread)</span></div>`;
+  const opts=threads.map(t=>`
+    <div class="popt${selectedParent===t.num?' sel':''}" onclick="selParent('${t.num}')">
+      <span class="popt-num">${t.num}</span>
+      <span class="popt-title">${t.type!=='plain'?'['+t.type.charAt(0).toUpperCase()+t.type.slice(1)+'] ':''}${t.title}</span>
+    </div>`).join('');
+  document.getElementById('parent-pick').innerHTML=rootOpt+opts;
+}
+function selParent(num){selectedParent=num;renderParentPick();}
+
+function setType(tp){
+  mType=tp;
+  document.querySelectorAll('.topt').forEach(o=>o.className='topt');
+  document.getElementById('topt-'+tp).className=`topt on-${tp}`;
+}
+
+function setSt(s){
+  mSt=s;
+  document.querySelectorAll('.sopt').forEach(o=>o.className='sopt');
+  document.getElementById('sopt-'+s).className=`sopt on-${s}`;
+  document.getElementById('dec-field').style.display=CLOSING.includes(s)?'block':'none';
+  document.getElementById('merge-field').style.display=s==='merged'?'block':'none';
+  if(s==='merged') renderMergePick();
+}
+
+function updCC(){
+  const v=document.getElementById('m-purpose').value;
+  const el=document.getElementById('char-c');
+  el.textContent=`${v.length} / 60`;
+  el.className='char-c'+(v.length>50?' warn':'');
+}
+
+function renderMergePick(){
+  document.getElementById('merge-pick').innerHTML=threads.filter(t=>t.id!==editId).map(t=>`
+    <div class="mopt${mMerge===t.num?' sel':''}" onclick="selMerge('${t.num}')">
+      <span class="mopt-num">${t.num}</span><span class="mopt-title">${t.title}</span>
+    </div>`).join('');
+}
+function selMerge(num){mMerge=num;renderMergePick();}
+
+function renderArts(){
+  document.getElementById('art-row').innerHTML=mArts.map((a,i)=>
+    `<span class="achip ${a.k}" style="cursor:pointer" onclick="rmArt(${i})">${ARTICON[a.k]} ${a.l} ✕</span>`).join('');
+}
+function addArt(k){
+  const v=prompt(`${k==='jira'?'Jira ticket':k==='conf'?'Confluence page':'HTML page'} name:`);
+  if(v&&v.trim()){mArts.push({k,l:v.trim()});renderArts();}
+}
+function rmArt(i){mArts.splice(i,1);renderArts();}
+
+function renderComments(){
+  document.getElementById('clist').innerHTML=mComments.map(c=>
+    `<div class="cmnt"><div class="cmnt-meta">${c.d||'Now'}</div><div class="cmnt-text">${c.t}</div></div>`).join('');
+}
+function addComment(){
+  const inp=document.getElementById('new-c'),v=inp.value.trim();
+  if(!v)return;
+  const now=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  mComments.push({t:v,d:now});inp.value='';renderComments();
+}
+
+async function saveThread(){
+  const title=document.getElementById('m-title').value.trim();
+  const purpose=document.getElementById('m-purpose').value.trim();
+  const decision=editId?document.getElementById('m-decision').value.trim():'';
+  let ok=true;
+  document.querySelectorAll('.err').forEach(e=>e.style.display='none');
+  if(!title){document.getElementById('err-title').style.display='block';ok=false;}
+  if(!purpose){document.getElementById('err-purpose').style.display='block';ok=false;}
+  if(fromBottomBtn&&!selectedParent){document.getElementById('err-parent').style.display='block';ok=false;}
+  if(editId&&CLOSING.includes(mSt)&&!decision){document.getElementById('err-decision').style.display='block';ok=false;}
+  if(mSt==='merged'&&!mMerge){document.getElementById('err-merge').style.display='block';ok=false;}
+  if(!ok)return;
+
+  const now=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  let commitMsg='';
+
+  if(editId){
+    const t=threads.find(x=>x.id===editId);
+    t.title=title;t.purpose=purpose;
+    t.notes=document.getElementById('m-notes').value.trim();
+    t.owner=document.getElementById('m-owner').value.trim();
+    t.decision=decision;t.type=mType;t.status=mSt;
+    t.mergeInto=mSt==='merged'?mMerge:null;
+    t.artefacts=[...mArts];t.comments=[...mComments];
+    commitMsg=`Update thread ${t.num} — ${t.status}`;
+  } else {
+    const par=fromBottomBtn?(selectedParent==='__root__'?null:selectedParent):newParentNum;
+    const num=nextNum(par);
+    threads.push({id:'t'+Date.now(),num,par,type:mType,title,purpose,
+      notes:document.getElementById('m-notes').value.trim(),
+      owner:'',status:'new',decision:'',artefacts:[],comments:[],mergeInto:null,created:now});
+    commitMsg=`Add thread ${num} — ${title}`;
+  }
+
+  closeModal();
+  renderAll();
+  await persistThreads(commitMsg);
+}
+
+async function deleteThread(){
+  if(!editId)return;
+  if(!confirm('Delete this thread and all its children?'))return;
+  const t=threads.find(x=>x.id===editId);
+  threads=threads.filter(x=>x.num!==t.num&&!x.num.startsWith(t.num+'.'));
+  closeModal();renderAll();
+  await persistThreads(`Delete thread ${t.num} — ${t.title}`);
+}
+
+function toJira(id){
+  const t=threads.find(x=>x.id===id);if(!t)return;
+  const pre=t.type!=='plain'?`[${t.type.toUpperCase()}] `:'';
+  alert(`Jira ticket preview:\n\nSummary: ${pre}${t.title}\nDescription: ${t.purpose}\nThread: ${t.num}`);
+}
+
+// ── BOOT ──
+loadThreads();
+</script>
+</body>
+</html>
