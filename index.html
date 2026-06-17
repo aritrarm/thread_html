@@ -99,9 +99,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .ttitle.done,.ttitle.cancelled{color:var(--text3);text-decoration:line-through;}
 .ttitle.merged{color:var(--text2);}
 .tprefix{font-weight:600;font-size:13px;}
+.tprefix.clarify{color:var(--sky);}
 .tprefix.action{color:var(--orange);}
-.tprefix.meeting{color:var(--accent);}
 .tprefix.research{color:var(--yellow);}
+.tprefix.decision{color:var(--green);}
+.tprefix.waiting{color:var(--purple);}
+.tprefix.review{color:var(--accent);}
 .towner{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);}
 .tmerged-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--purple);}
 .sbadge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 7px;border-radius:10px;font-weight:500;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0;}
@@ -167,9 +170,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .topt,.sopt{padding:6px 11px;border:1px solid var(--border2);border-radius:var(--rsm);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;background:var(--bg3);color:var(--text2);transition:all var(--tr);}
 .topt:hover,.sopt:hover{background:var(--bg2);}
 .topt.on-plain{background:var(--accent-s);color:var(--accent);border-color:rgba(91,106,247,.3);}
+.topt.on-clarify{background:var(--sky-s);color:var(--sky);border-color:rgba(56,189,248,.3);}
 .topt.on-action{background:var(--orange-s);color:var(--orange);border-color:rgba(249,115,22,.3);}
-.topt.on-meeting{background:var(--accent-s);color:var(--accent);border-color:rgba(91,106,247,.3);}
 .topt.on-research{background:var(--yellow-s);color:var(--yellow);border-color:rgba(234,179,8,.3);}
+.topt.on-decision{background:var(--green-s);color:var(--green);border-color:rgba(34,197,94,.3);}
+.topt.on-waiting{background:var(--purple-s);color:var(--purple);border-color:rgba(168,85,247,.3);}
+.topt.on-review{background:var(--accent-s);color:var(--accent);border-color:rgba(91,106,247,.3);}
 .sopt.on-new{background:var(--bg3);color:var(--text2);}
 .sopt.on-doing{background:var(--orange-s);color:var(--orange);border-color:rgba(249,115,22,.3);}
 .sopt.on-blocked{background:var(--red-s);color:var(--red);border-color:rgba(239,68,68,.3);}
@@ -203,10 +209,49 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .btn-d{background:var(--red-s);color:var(--red);border-color:rgba(239,68,68,.3);}
 .btn-d:hover{background:var(--red);color:#fff;}
 .btn-sm{padding:5px 10px;font-size:11px;}
+
+/* PROJECT SELECTOR */
+.proj-selector{position:relative;margin-bottom:14px;}
+.proj-current{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:7px 12px;border:1px solid var(--border2);border-radius:var(--rsm);background:var(--bg2);color:var(--text);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;width:100%;transition:border-color var(--tr);}
+.proj-current:hover{border-color:var(--accent);}
+.proj-caret{font-size:11px;color:var(--text3);transition:transform var(--tr);}
+.proj-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);box-shadow:var(--sh);z-index:50;padding:4px 0;}
+.proj-item{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;cursor:pointer;font-size:13px;color:var(--text);transition:background var(--tr);}
+.proj-item:hover,.proj-item.active{background:var(--accent-s);color:var(--accent);}
+.proj-item-actions{display:flex;gap:4px;opacity:0;transition:opacity var(--tr);}
+.proj-item:hover .proj-item-actions{opacity:1;}
+.proj-ibtn{font-size:10px;padding:2px 6px;border:1px solid var(--border2);border-radius:var(--rsm);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:'DM Mono',monospace;transition:all var(--tr);}
+.proj-ibtn:hover{border-color:var(--red);color:var(--red);}
+.proj-sep{border-top:1px solid var(--border);margin:4px 0;}
+.proj-action{padding:7px 12px;font-size:12px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;transition:color var(--tr);}
+.proj-action:hover{color:var(--accent);}
+.proj-archived-items{padding:0 6px;}
+/* LINEAGE TOGGLE */
+.lineage-hd{cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;}
+.lineage-hd:hover{color:var(--text2);}
 </style>
 </head>
 <body>
 <div class="app">
+
+  <!-- PROJECT SELECTOR -->
+  <div class="proj-selector" id="proj-selector">
+    <button class="proj-current" id="proj-current" onclick="toggleProjDropdown()">
+      <span id="proj-current-name">Inbox</span>
+      <span class="proj-caret">▾</span>
+    </button>
+    <div class="proj-dropdown" id="proj-dropdown" style="display:none">
+      <div id="proj-list"></div>
+      <div class="proj-sep"></div>
+      <div class="proj-action" onclick="openNewProject()">+ New Project</div>
+      <div class="proj-action" id="proj-arch-toggle" onclick="toggleArchivedSection()">
+        Archived (<span id="archived-count">0</span>) <span id="arch-caret" style="font-size:10px">▶</span>
+      </div>
+      <div id="proj-archived-section" style="display:none">
+        <div class="proj-archived-items" id="proj-archived-list"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- SETUP BANNER -->
   <div class="setup-banner" id="setup-banner">
@@ -218,18 +263,17 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   </div>
 
   <div class="topbar">
-    <div>
-      <div class="proj-title">Project Alpha</div>
-      <div class="proj-purpose">Build and ship the payments infrastructure overhaul for Q3</div>
-    </div>
+    <div class="proj-title" id="proj-display-name">Inbox</div>
     <div class="icon-round" onclick="toggleTheme()"><span id="theme-icon">☀️</span></div>
   </div>
 
   <div class="health" id="health-bar"></div>
 
   <div class="lineage">
-    <div class="panel-label">🧬 Thread lineage</div>
-    <div class="lin-rows" id="lin-rows"><div style="font-size:11px;color:var(--text3)">Loading...</div></div>
+    <div class="panel-label lineage-hd" onclick="toggleLineage()">
+      🧬 Thread lineage <span id="lineage-caret" style="font-size:10px">▶</span>
+    </div>
+    <div class="lin-rows" id="lin-rows" style="display:none"></div>
   </div>
 
   <div class="sec-label">Threads</div>
@@ -258,9 +302,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
     <label>Type</label>
     <div class="type-row">
       <div class="topt on-plain" id="topt-plain"    onclick="setType('plain')">Plain</div>
+      <div class="topt"          id="topt-clarify"  onclick="setType('clarify')">[Clarify]</div>
       <div class="topt"          id="topt-action"   onclick="setType('action')">[Action]</div>
-      <div class="topt"          id="topt-meeting"  onclick="setType('meeting')">[Meeting]</div>
       <div class="topt"          id="topt-research" onclick="setType('research')">[Research]</div>
+      <div class="topt"          id="topt-decision" onclick="setType('decision')">[Decision]</div>
+      <div class="topt"          id="topt-waiting"  onclick="setType('waiting')">[Waiting]</div>
+      <div class="topt"          id="topt-review"   onclick="setType('review')">[Review]</div>
     </div>
   </div>
 
@@ -353,10 +400,15 @@ const HAS_CONFIG = !window._configMissing && typeof GITHUB_CONFIG !== 'undefined
 if(!HAS_CONFIG) document.getElementById('setup-banner').classList.add('show');
 
 // ── STATE ──
+let projects=[];
+let currentProjectId='p_inbox';
 let threads=[];
-let fileSHA=''; // GitHub needs the current SHA to update a file
+let fileSHA='';
 let editId=null,newParentNum=null,fromBottomBtn=false,selectedParent=null;
 let mType='plain',mSt='new',mMerge=null,mArts=[],mComments=[];
+
+function currentProject(){return projects.find(p=>p.id===currentProjectId);}
+function syncThreads(){threads=currentProject()?.threads||[];}
 
 const CLOSING=['done','cancelled','merged'];
 const CLOSED_SET=new Set(CLOSING);
@@ -365,7 +417,7 @@ const DOTCLS={new:'s-new',doing:'s-doing',blocked:'s-blocked',review:'s-review',
 const BADGECLS={new:'sb-new',doing:'sb-doing',blocked:'sb-blocked',review:'sb-review',done:'sb-done',cancelled:'sb-cancelled',merged:'sb-merged'};
 const BADGELBL={new:'New',doing:'Doing',blocked:'Blocked',review:'Review',done:'Done',cancelled:'Cancelled',merged:'Merged'};
 const ARTICON={jira:'🟦',conf:'📗',html:'🌐'};
-const PREFIXCLS={action:'action',meeting:'meeting',research:'research'};
+const PREFIXCLS={clarify:'clarify',action:'action',research:'research',decision:'decision',waiting:'waiting',review:'review'};
 const CLSLBL={done:'Done',cancelled:'Cancelled',merged:'Merged'};
 const CLSDOT={done:'background:var(--green)',cancelled:'background:var(--text3)',merged:'background:var(--purple)'};
 
@@ -387,32 +439,34 @@ async function ghFetch(path,method='GET',body=null){
 }
 
 async function loadThreads(){
+  const fallback=[{id:'p_inbox',name:'Inbox',archived:false,threads:[]}];
   if(!HAS_CONFIG){
-    // fallback: load from threads.json via relative fetch
     try{
       const r=await fetch('threads.json');
-      threads=await r.json();
+      const parsed=await r.json();
+      projects=parsed.projects||fallback;
     } catch(e){
-      threads=[];
+      projects=fallback;
     }
-    renderAll();
+    syncThreads();renderAll();
     return;
   }
   try{
     const data=await ghFetch('threads.json');
     fileSHA=data.sha;
-    threads=JSON.parse(atob(data.content.replace(/\n/g,'')));
-    renderAll();
+    const parsed=JSON.parse(atob(data.content.replace(/\n/g,'')));
+    projects=parsed.projects||fallback;
+    syncThreads();renderAll();
   } catch(e){
     showStatus('error','Failed to load threads.json');
   }
 }
 
 async function persistThreads(commitMsg){
-  if(!HAS_CONFIG) return; // no-op if no config
+  if(!HAS_CONFIG) return;
   showStatus('saving','Saving...');
   try{
-    const content=btoa(unescape(encodeURIComponent(JSON.stringify(threads,null,2))));
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify({projects},null,2))));
     const res=await ghFetch('threads.json','PUT',{
       message: commitMsg || 'Update threads',
       content,
@@ -459,7 +513,7 @@ function effSt(num){
 }
 
 // ── RENDER ──
-function renderAll(){renderTree();renderHealth();renderLineage();}
+function renderAll(){renderTree();renderHealth();renderLineage();renderProjectSelector();}
 
 function renderTree(){
   const el=document.getElementById('tree');
@@ -713,14 +767,14 @@ async function saveThread(){
     t.decision=decision;t.type=mType;t.status=mSt;
     t.mergeInto=mSt==='merged'?mMerge:null;
     t.artefacts=[...mArts];t.comments=[...mComments];
-    commitMsg=`Update thread ${t.num} — ${t.status}`;
+    commitMsg=`Update thread ${t.num} in ${currentProject().name}`;
   } else {
     const par=fromBottomBtn?(selectedParent==='__root__'?null:selectedParent):newParentNum;
     const num=nextNum(par);
     threads.push({id:'t'+Date.now(),num,par,type:mType,title,purpose,
       notes:document.getElementById('m-notes').value.trim(),
       owner:'',status:'new',decision:'',artefacts:[],comments:[],mergeInto:null,created:now});
-    commitMsg=`Add thread ${num} — ${title}`;
+    commitMsg=`Add thread ${num} in ${currentProject().name}`;
   }
 
   closeModal();
@@ -732,9 +786,11 @@ async function deleteThread(){
   if(!editId)return;
   if(!confirm('Delete this thread and all its children?'))return;
   const t=threads.find(x=>x.id===editId);
-  threads=threads.filter(x=>x.num!==t.num&&!x.num.startsWith(t.num+'.'));
+  const proj=currentProject();
+  proj.threads=proj.threads.filter(x=>x.num!==t.num&&!x.num.startsWith(t.num+'.'));
+  syncThreads();
   closeModal();renderAll();
-  await persistThreads(`Delete thread ${t.num} — ${t.title}`);
+  await persistThreads(`Delete thread ${t.num} in ${proj.name}`);
 }
 
 function toJira(id){
@@ -742,6 +798,108 @@ function toJira(id){
   const pre=t.type!=='plain'?`[${t.type.toUpperCase()}] `:'';
   alert(`Jira ticket preview:\n\nSummary: ${pre}${t.title}\nDescription: ${t.purpose}\nThread: ${t.num}`);
 }
+
+// ── PROJECT SELECTOR ──
+function renderProjectSelector(){
+  const active=projects.filter(p=>!p.archived);
+  const archived=projects.filter(p=>p.archived);
+  const name=currentProject()?.name||'Inbox';
+  document.getElementById('proj-current-name').textContent=name;
+  document.getElementById('proj-display-name').textContent=name;
+  document.getElementById('proj-list').innerHTML=active.map(p=>`
+    <div class="proj-item${p.id===currentProjectId?' active':''}" onclick="switchProject('${p.id}')">
+      <span>${p.name}</span>
+      ${p.id!=='p_inbox'?`<span class="proj-item-actions">
+        <span class="proj-ibtn" onclick="event.stopPropagation();archiveProject('${p.id}')">Archive</span>
+        <span class="proj-ibtn" onclick="event.stopPropagation();deleteProject('${p.id}')">Delete</span>
+      </span>`:''}
+    </div>`).join('');
+  document.getElementById('archived-count').textContent=archived.length;
+  document.getElementById('proj-archived-list').innerHTML=archived.map(p=>`
+    <div class="proj-item" onclick="switchProject('${p.id}')">
+      <span>${p.name}</span>
+      <span class="proj-item-actions" style="opacity:1">
+        <span class="proj-ibtn" onclick="event.stopPropagation();unarchiveProject('${p.id}')">Restore</span>
+        <span class="proj-ibtn" onclick="event.stopPropagation();deleteProject('${p.id}')">Delete</span>
+      </span>
+    </div>`).join('');
+}
+
+function toggleProjDropdown(){
+  const dd=document.getElementById('proj-dropdown');
+  const open=dd.style.display==='none';
+  dd.style.display=open?'block':'none';
+  if(open) renderProjectSelector();
+}
+
+function switchProject(id){
+  currentProjectId=id;
+  syncThreads();
+  document.getElementById('proj-dropdown').style.display='none';
+  renderAll();
+}
+
+function openNewProject(){
+  const name=prompt('Project name:');
+  if(!name?.trim()) return;
+  const id='p_'+Date.now();
+  projects.push({id,name:name.trim(),archived:false,threads:[]});
+  document.getElementById('proj-dropdown').style.display='none';
+  switchProject(id);
+  persistThreads(`Create project ${name.trim()}`);
+}
+
+function archiveProject(id){
+  const p=projects.find(x=>x.id===id);
+  if(!p||id==='p_inbox') return;
+  p.archived=true;
+  if(currentProjectId===id){switchProject('p_inbox');}
+  else{renderAll();}
+  persistThreads(`Archive project ${p.name}`);
+}
+
+function unarchiveProject(id){
+  const p=projects.find(x=>x.id===id);
+  if(!p) return;
+  p.archived=false;
+  renderProjectSelector();
+  persistThreads(`Restore project ${p.name}`);
+}
+
+function deleteProject(id){
+  if(id==='p_inbox') return;
+  const p=projects.find(x=>x.id===id);
+  if(!confirm(`Delete "${p.name}" and all its threads? This cannot be undone.`)) return;
+  projects=projects.filter(x=>x.id!==id);
+  if(currentProjectId===id){switchProject('p_inbox');}
+  else{renderAll();}
+  persistThreads(`Delete project ${p.name}`);
+}
+
+function toggleArchivedSection(){
+  const el=document.getElementById('proj-archived-section');
+  const caret=document.getElementById('arch-caret');
+  const open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+  caret.textContent=open?'▶':'▼';
+}
+
+// ── LINEAGE TOGGLE ──
+function toggleLineage(){
+  const el=document.getElementById('lin-rows');
+  const caret=document.getElementById('lineage-caret');
+  const open=el.style.display!=='none';
+  el.style.display=open?'none':'flex';
+  caret.textContent=open?'▶':'▼';
+}
+
+// ── OUTSIDE CLICK TO CLOSE DROPDOWN ──
+document.addEventListener('click',e=>{
+  const sel=document.getElementById('proj-selector');
+  if(sel&&!sel.contains(e.target)){
+    document.getElementById('proj-dropdown').style.display='none';
+  }
+});
 
 // ── BOOT ──
 loadThreads();

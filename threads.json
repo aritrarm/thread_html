@@ -1,12 +1,10 @@
-[
-  {"id":"t1","num":"1","par":null,"type":"plain","title":"Vendor change decision","purpose":"Should we switch our payments provider?","owner":"@raj","status":"blocked","decision":"","notes":"Current vendor at 2.3%, alternatives at 1.1%","artefacts":[{"k":"jira","l":"JRA-12"},{"k":"conf","l":"Vendor Review"}],"comments":[{"t":"CFO needs cost analysis","d":"Jun 3"}],"mergeInto":null,"created":"Jun 1"},
-  {"id":"t2","num":"1.1","par":"1","type":"action","title":"Cost comparison document","purpose":"Compare top 3 vendors on fees and SLAs","owner":"@raj","status":"doing","decision":"","notes":"","artefacts":[{"k":"conf","l":"Cost Analysis"}],"comments":[],"mergeInto":null,"created":"Jun 2"},
-  {"id":"t3","num":"1.2","par":"1","type":"meeting","title":"CFO sign-off meeting","purpose":"Get CFO approval to proceed with switch","owner":"@raj","status":"new","decision":"","notes":"Scheduled Jun 10","artefacts":[],"comments":[{"t":"Invite sent","d":"Jun 4"}],"mergeInto":null,"created":"Jun 3"},
-  {"id":"t4","num":"2","par":null,"type":"plain","title":"Auth latency spike","purpose":"Get P95 auth latency back under 200ms SLA","owner":"@priya","status":"doing","decision":"","notes":"Alert fired Jun 1","artefacts":[],"comments":[],"mergeInto":null,"created":"Jun 1"},
-  {"id":"t5","num":"2.1","par":"2","type":"research","title":"Redis cache layer test","purpose":"Does Redis caching reduce auth latency?","owner":"@priya","status":"done","decision":"Cache invalidation caused more issues — abandoned","notes":"","artefacts":[{"k":"jira","l":"JRA-28"}],"comments":[{"t":"Failed — moving on","d":"Jun 2"}],"mergeInto":null,"created":"Jun 1"},
-  {"id":"t6","num":"2.2","par":"2","type":"research","title":"DB index optimisation","purpose":"Are missing indexes the root cause?","owner":"@priya","status":"merged","decision":"Partial gain only — findings merged into 2.3","notes":"","artefacts":[{"k":"jira","l":"JRA-31"}],"comments":[],"mergeInto":"2.3","created":"Jun 2"},
-  {"id":"t7","num":"2.3","par":"2","type":"action","title":"Query rewrite — combined approach","purpose":"Rewrite slow queries using index + cache combo","owner":"@priya","status":"doing","decision":"","notes":"Absorbs 2.1 and 2.2 findings","artefacts":[{"k":"jira","l":"JRA-35"}],"comments":[],"mergeInto":null,"created":"Jun 4"},
-  {"id":"t8","num":"3","par":null,"type":"plain","title":"Onboarding redesign","purpose":"Reduce step-3 drop-off from 62% to under 30%","owner":"@sara","status":"doing","decision":"","notes":"","artefacts":[],"comments":[],"mergeInto":null,"created":"Jun 2"},
-  {"id":"t9","num":"3.1","par":"3","type":"research","title":"Session recording review","purpose":"Find exactly where users drop at step 3","owner":"@sara","status":"review","decision":"","notes":"","artefacts":[{"k":"html","l":"Session Analysis"}],"comments":[],"mergeInto":null,"created":"Jun 3"},
-  {"id":"t10","num":"3.2","par":"3","type":"meeting","title":"UX concepts review","purpose":"Agree on 2 concepts to A/B test","owner":"@sara","status":"new","decision":"","notes":"","artefacts":[],"comments":[],"mergeInto":null,"created":"Jun 4"}
-]
+{
+  "projects": [
+    {
+      "id": "p_inbox",
+      "name": "Inbox",
+      "archived": false,
+      "threads": []
+    }
+  ]
+}
