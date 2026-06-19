@@ -1,2 +1,8 @@
 # GitHub API token — NEVER commit this file
 config.js
+
+# Local brainstorm — not for version control
+todolist.md
+
+# Environment secrets
+.env
